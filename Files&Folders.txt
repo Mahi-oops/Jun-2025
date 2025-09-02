@@ -1,0 +1,12 @@
+| Command              | Description                 | Example                          |
+| -------------------- | --------------------------- | -------------------------------- |
+| `touch FILE`         | Create empty file           | `touch notes.txt`                |
+| `mkdir DIR`          | Create folder               | `mkdir projects`                 |
+| `mkdir -p DIR1/DIR2` | Nested folders              | `mkdir -p work/code`             |
+| `cp FILE1 FILE2`     | Copy a file                 | `cp notes.txt backup.txt`        |
+| `cp -r DIR1 DIR2`    | Copy folder recursively     | `cp -r projects projects_backup` |
+| `mv FILE1 FILE2`     | Rename/move file            | `mv old.txt new.txt`             |
+| `mv FILE DIR`        | Move file to folder         | `mv notes.txt ~/Documents/`      |
+| `rm FILE`            | Delete file                 | `rm notes.txt`                   |
+| `rm -r DIR`          | Delete folder               | `rm -r projects`                 |
+| `rm -ri DIR`         | Delete folder interactively | `rm -ri projects`                |

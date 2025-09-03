@@ -1,0 +1,11 @@
+Commands for Searching & Finding
+
+| Command                            | Description        | Example                               |
+| ---------------------------------- | ------------------ | ------------------------------------- |
+| `grep "WORD" FILE`                 | Search inside file | `grep "error" app.log`                |
+| `grep -i "WORD" FILE`              | Case-insensitive   | `grep -i "error" app.log`             |
+| `grep -in "WORD" FILE`             | With line numbers  | `grep -in "error" app.log`            |
+| `grep -R "WORD" DIR`               | Recursive search   | `grep -R "TODO" ./projects`           |
+| `find DIR -name "PATTERN"`         | Find files         | `find . -name "report*.pdf"`          |
+| `find DIR -type d -name "DIRNAME"` | Find folders       | `find /var/log -type d -name "nginx"` |
+| `find DIR -type f -size +100M`     | Find big files     | `find /var -type f -size +100M`       |

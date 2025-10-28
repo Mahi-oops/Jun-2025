@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mini Arcade — Snake & Snakes & Ladders (Privacy Friendly)</title>
+  <meta name="description" content="Offline, privacy-friendly mini arcade with Snake and Snakes & Ladders. No tracking, no forms, no external resources." />
+  <style>
+    :root{ --bg:#071029; --panel:#0d1726; --muted:rgba(255,255,255,0.68); --accent1:linear-gradient(135deg,#06b6d4,#7c3aed); }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;color:#eef2ff;background:radial-gradient(800px 400px at 10% 10%, rgba(124,58,237,0.08), transparent), radial-gradient(600px 300px at 90% 90%, rgba(6,182,212,0.06), transparent), var(--bg);-webkit-font-smoothing:antialiased}
+    .wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px}
+    .panel{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:18px;box-shadow:0 12px 36px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03)}
+    header{display:flex;align-items:center;justify-content:space-between}
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{width:48px;height:48px;border-radius:10px;background:linear-gradient(135deg,#06b6d4,#7c3aed);display:flex;align-items:center;justify-content:center;font-weight:800;color:white}
+    h1{margin:0;font-size:18px}
+    .subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+    .controls{display:flex;gap:8px}
+    .btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:#fff;cursor:pointer;font-weight:600}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer;transition:transform .18s,box-shadow .18s}
+    .card:hover{transform:translateY(-6px);box-shadow:0 18px 50px rgba(2,6,23,0.5)}
+    .small{font-size:13px;color:var(--muted)}
+    #gameArea{display:none;margin-top:16px}
+    .gameHeader{display:flex;justify-content:space-between;align-items:center}
+    .gameGrid{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
+    .canvasCard{background:rgba(255,255,255,0.03);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03)}
+    canvas{display:block;border-radius:8px;background:#0b1220}
+    .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+    @media (max-width:860px){.grid{grid-template-columns:1fr}.gameGrid{flex-direction:column}.canvasCard{width:100%}canvas{width:100%!important;height:auto!important}}
+    .muted{color:var(--muted)}
+    /* small dialog */
+    .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);}
+    .dialog{background:#0d1117;padding:18px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);max-width:90%;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel" role="application" aria-label="Mini arcade, privacy friendly">
+      <header>
+        <div class="brand">
+          <div class="logo">GA</div>
+          <div>
+            <h1>Mini Arcade — Snake & Snakes & Ladders</h1>
+            <div class="subtitle">Offline & privacy-friendly — no forms, no tracking.</div>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="openReadme" class="btn">How to play</button>
+          <button id="backToMenu" class="btn" style="display:none">← Menu</button>
+        </div>
+      </header>
+
+      <main>
+        <section id="menuArea">
+          <div class="grid">
+            <div class="card">
+              <h3>Snakes & Ladders</h3>
+              <p class="small">Animated 10×10 board. Play local (2 players) or vs PC. Click to start.</p>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <button class="btn" onclick="openGame('ladders','hotseat')">Play Local</button>
+                <button class="btn" onclick="openGame('ladders','ai')">Play vs PC</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <h3>Snake (classic)</h3>
+              <p class="small">Eat apples, grow longer. Play solo or vs PC autoplayer.</p>
+              <div style="margin-top:10px;display:flex;gap:8px">
+                <button class="btn" onclick="openGame('snake','single')">Play Solo</button>
+                <button class="btn" onclick="openGame('snake','ai')">Play vs PC</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="gameArea">
+          <div class="gameHeader">
+            <div>
+              <h2 id="gameTitle">Game</h2>
+              <div id="gameSub" class="small muted">Enjoy!</div>
+            </div>
+            <div>
+              <button id="pauseBtn" class="btn" style="display:none">Pause</button>
+            </div>
+          </div>
+
+          <div class="gameGrid">
+            <div class="canvasCard" id="laddersCard" style="min-width:620px;display:none">
+              <canvas id="laddersCanvas" width="600" height="500" aria-label="Snakes and Ladders board"></canvas>
+              <div class="row">
+                <div id="laddersDiceArea" class="small">🎲 Click Roll to Start!</div>
+                <div style="flex:1"></div>
+                <button id="laddersRollBtn" class="btn">Roll</button>
+                <button id="laddersResetBtn" class="btn">Reset</button>
+              </div>
+              <div class="row" style="margin-top:10px">
+                <div id="laddersStatus" class="small">Status</div>
+                <div style="flex:1"></div>
+                <div id="laddersScore" class="small">Score</div>
+              </div>
+            </div>
+
+            <div class="canvasCard" id="snakeCard" style="width:420px;display:none">
+              <canvas id="snakeCanvas" width="400" height="400" aria-label="Snake game canvas"></canvas>
+              <div class="row">
+                <div id="snakeStatus" class="small">Score: 0</div>
+                <div style="flex:1"></div>
+                <button id="snakeResetBtn" class="btn">Reset</button>
+              </div>
+              <div class="row" style="margin-top:8px"><div class="small">Controls: Arrow keys or WASD</div></div>
+            </div>
+          </div>
+        </section>
+
+        <div id="readme" style="display:none;margin-top:14px;padding:12px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.03)">
+          <strong>How to play</strong>
+          <p class="small">Snake — eat red apples, grow longer. Move with arrow keys or WASD. In vs PC mode a simple autoplayer runs concurrently.
+          <br>Snakes & Ladders — click Roll to roll the dice. First to reach 100 wins. In vs PC mode the computer will roll and move for its turns.
+          </p>
+          <div style="display:flex;gap:8px;margin-top:8px"><button id="closeReadme" class="btn">Close</button></div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script>
+    /* ========== Top-level UI ========== */
+    const menuArea = document.getElementById('menuArea');
+    const gameArea = document.getElementById('gameArea');
+    const gameTitle = document.getElementById('gameTitle');
+    const gameSub = document.getElementById('gameSub');
+    const backToMenu = document.getElementById('backToMenu');
+    const openReadme = document.getElementById('openReadme');
+    const readme = document.getElementById('readme');
+    let activeGame = null; let activeMode = null;
+
+    openReadme.addEventListener('click', ()=> readme.style.display = (readme.style.display === 'none' ? 'block' : 'none'));
+    document.getElementById('closeReadme').addEventListener('click', ()=> readme.style.display = 'none');
+    backToMenu.addEventListener('click', ()=> closeGame());
+
+    function openGame(which, mode){
+      menuArea.style.display = 'none'; gameArea.style.display = 'block'; backToMenu.style.display = 'inline-block';
+      activeGame = which; activeMode = mode;
+      gameTitle.textContent = (which === 'snake') ? 'Snake (classic)' : 'Snakes & Ladders';
+      gameSub.textContent = (which === 'snake') ? (mode==='ai'? 'Play vs PC — press arrows to control your snake' : 'Play Solo — use arrows') : (mode==='ai'? 'Play vs PC — you vs computer' : 'Hotseat: two players on one device');
+      document.getElementById('snakeCard').style.display = (which === 'snake') ? 'block' : 'none';
+      document.getElementById('laddersCard').style.display = (which === 'ladders') ? 'block' : 'none';
+      if(which === 'snake') initSnake(mode); else initLadders(mode);
+    }
+
+    function closeGame(){ if(activeGame === 'snake') destroySnake(); if(activeGame === 'ladders') destroyLadders(); activeGame = null; activeMode = null; gameArea.style.display = 'none'; menuArea.style.display = 'block'; backToMenu.style.display = 'none'; }
+
+    /* =================== SNAKE (supports vs PC) =================== */
+    const snakeCanvas = document.getElementById('snakeCanvas');
+    const snakeCtx = snakeCanvas.getContext('2d');
+    const GRID = 20; const SNAKE_SPEED = 120; // ms
+
+    let snakeState = null;
+
+    function initSnake(mode){ destroySnake();
+      snakeState = {
+        mode: mode || 'single',
+        player: [{x:100,y:200,dx:GRID,dy:0,body:[{x:100,y:200}],score:0}],
+        ai: null,
+        interval: null,
+      };
+      // if vs PC, create ai snake
+      if(mode === 'ai'){
+        snakeState.ai = {x:200,y:200,dx:-GRID,dy:0,body:[{x:200,y:200}],score:0};
+      }
+      document.getElementById('snakeStatus').textContent = 'Score: 0';
+      drawSnake();
+      snakeState.keyHandler = function(e){ handleSnakeKey(e); };
+      window.addEventListener('keydown', snakeState.keyHandler);
+      snakeState.interval = setInterval(()=> updateSnake(), SNAKE_SPEED);
+    }
+
+    function destroySnake(){ if(!snakeState) return; if(snakeState.interval) clearInterval(snakeState.interval); if(snakeState.keyHandler) window.removeEventListener('keydown', snakeState.keyHandler); snakeState = null; }
+
+    function handleSnakeKey(e){ if(!snakeState) return; const k = e.key.toLowerCase(); const p = snakeState.player[0]; if(k==='arrowup'||k==='w'){ if(p.dy!==GRID){ p.dx=0; p.dy=-GRID; } } else if(k==='arrowdown'||k==='s'){ if(p.dy!==-GRID){ p.dx=0; p.dy=GRID; } } else if(k==='arrowleft'||k==='a'){ if(p.dx!==GRID){ p.dx=-GRID; p.dy=0; } } else if(k==='arrowright'||k==='d'){ if(p.dx!==-GRID){ p.dx=GRID; p.dy=0; } } }
+
+    function randomCell(canvas){ const max = Math.floor(canvas.width/GRID); return {x: Math.floor(Math.random()*max)*GRID, y: Math.floor(Math.random()*max)*GRID}; }
+
+    function drawSnake(){ // initialize draw if no food
+      snakeCtx.fillStyle = '#06111a'; snakeCtx.fillRect(0,0,snakeCanvas.width,snakeCanvas.height);
+      // ensure food exists
+      if(!snakeState.food){ snakeState.food = randomCell(snakeCanvas); }
+      // draw food
+      snakeCtx.fillStyle = '#ef4444'; snakeCtx.fillRect(snakeState.food.x, snakeState.food.y, GRID, GRID);
+      // draw player snake
+      snakeState.player[0].body.forEach((p,i)=>{ snakeCtx.fillStyle = i===0? '#22c55e' : '#16a34a'; snakeCtx.fillRect(p.x,p.y,GRID,GRID); });
+      // draw ai snake if present
+      if(snakeState.ai){ snakeState.ai.body.forEach((p,i)=>{ snakeCtx.fillStyle = i===0? '#60a5fa' : '#3b82f6'; snakeCtx.fillRect(p.x,p.y,GRID,GRID); }); }
+      document.getElementById('snakeStatus').textContent = 'Score: '+snakeState.player[0].score + (snakeState.ai? (' | PC: '+snakeState.ai.score) : '');
+    }
+
+    function pointEquals(a,b){ return a.x===b.x && a.y===b.y; }
+
+    function collisionWith(body, point){ return body.some(p=> pointEquals(p, point)); }
+
+    function aiMoveTowards(ai, food, otherBodies){ // basic greedy with simple avoidance
+      const head = ai.body[0]; let ndx = ai.dx, ndy = ai.dy;
+      if(Math.abs(food.x - head.x) > Math.abs(food.y - head.y)){ ndx = food.x > head.x ? GRID : -GRID; ndy = 0; } else { ndy = food.y > head.y ? GRID : -GRID; ndx = 0; }
+      // avoid immediate self-collision
+      const next = {x: head.x + ndx, y: head.y + ndy};
+      if(next.x < 0 || next.y < 0 || next.x >= snakeCanvas.width || next.y >= snakeCanvas.height || collisionWith(ai.body, next) || otherBodies.some(b=> collisionWith(b, next))){ // try perpendicular
+        if(ndx===0){ ndx = head.x + GRID < snakeCanvas.width ? GRID : -GRID; ndy = 0; } else { ndy = head.y + GRID < snakeCanvas.height ? GRID : -GRID; ndx = 0; }
+      }
+      ai.dx = ndx; ai.dy = ndy;
+    }
+
+    function updateSnake(){ if(!snakeState) return;
+      const player = snakeState.player[0];
+      // move player
+      const newHead = {x: player.body[0].x + player.dx, y: player.body[0].y + player.dy};
+      // boundary or self collision
+      if(newHead.x < 0 || newHead.y < 0 || newHead.x >= snakeCanvas.width || newHead.y >= snakeCanvas.height || collisionWith(player.body, newHead)){
+        clearInterval(snakeState.interval); alert('You lost! Final score: '+player.score); destroySnake(); return; }
+      player.body.unshift(newHead);
+      // check food
+      if(pointEquals(newHead, snakeState.food)){
+        player.score++;
+        // respawn food not on any snake
+        do{ snakeState.food = randomCell(snakeCanvas); } while(collisionWith(player.body, snakeState.food) || (snakeState.ai && collisionWith(snakeState.ai.body, snakeState.food)));
+      } else player.body.pop();
+
+      // AI snake move
+      if(snakeState.ai){ aiMoveTowards(snakeState.ai, snakeState.food, [player.body]); const aiNew = {x: snakeState.ai.body[0].x + snakeState.ai.dx, y: snakeState.ai.body[0].y + snakeState.ai.dy};
+        if(aiNew.x < 0 || aiNew.y < 0 || aiNew.x >= snakeCanvas.width || aiNew.y >= snakeCanvas.height || collisionWith(snakeState.ai.body, aiNew) || collisionWith(player.body, aiNew)){
+          // AI collided -> player wins
+          clearInterval(snakeState.interval); alert('PC crashed! You Win! Your score: '+player.score); destroySnake(); return;
+        }
+        snakeState.ai.body.unshift(aiNew);
+        if(pointEquals(aiNew, snakeState.food)){ snakeState.ai.score++; do{ snakeState.food = randomCell(snakeCanvas); } while(collisionWith(player.body, snakeState.food) || collisionWith(snakeState.ai.body, snakeState.food)); } else snakeState.ai.body.pop();
+      }
+
+      drawSnake();
+    }
+
+    document.getElementById('snakeResetBtn').addEventListener('click', ()=>{ if(activeGame==='snake') initSnake(activeMode); });
+
+    /* =================== SNAKES & LADDERS (animated, vs PC or hotseat) =================== */
+    const laddersCanvas = document.getElementById('laddersCanvas');
+    const laddersCtx = laddersCanvas.getContext('2d');
+    const BOARD_SIZE = 10; const SQUARE = 50;
+    const LADDER_MAP = {4:14,9:31,21:42,28:84,36:44,51:67,71:91,80:100};
+    const SNAKE_MAP = {16:6,47:26,49:11,56:53,62:19,64:60,87:24,93:73,95:75,98:78};
+    let laddersState = null;
+
+    function initLadders(mode){ destroyLadders(); laddersState = {mode: mode||'hotseat', positions:[0,0], current:1, dice:0, anim:false}; document.getElementById('laddersStatus').textContent = "Player 1's Turn"; document.getElementById('laddersDiceArea').textContent='🎲 Click Roll to Start!'; drawBoard(); updateScore(); document.getElementById('laddersRollBtn').disabled=false; }
+    function destroyLadders(){ laddersState = null; }
+
+    function drawBoard(){ laddersCtx.clearRect(0,0,laddersCanvas.width,laddersCanvas.height);
+      for(let r=0;r<BOARD_SIZE;r++){
+        for(let c=0;c<BOARD_SIZE;c++){
+          const pos = (BOARD_SIZE-1 - r)*BOARD_SIZE + (r%2===0? c+1 : BOARD_SIZE - c);
+          const x = c*SQUARE, y = r*SQUARE;
+          laddersCtx.fillStyle = pos===100? '#ffd700' : (pos%2===0? '#f8fafc' : '#fff');
+          laddersCtx.fillRect(x,y,SQUARE,SQUARE);
+          laddersCtx.strokeStyle = '#111827'; laddersCtx.lineWidth = 1; laddersCtx.strokeRect(x,y,SQUARE,SQUARE);
+          laddersCtx.fillStyle = '#0b1220'; laddersCtx.font='12px sans-serif'; laddersCtx.textAlign='center'; laddersCtx.fillText(String(pos), x+SQUARE/2, y+SQUARE/2+4);
+        }
+      }
+      // draw ladders and snakes
+      Object.keys(LADDER_MAP).forEach(s=> drawPath(+s, LADDER_MAP[s], true));
+      Object.keys(SNAKE_MAP).forEach(s=> drawPath(+s, SNAKE_MAP[s], false));
+      drawTokens(); drawDice();
+    }
+
+    function coordFor(pos){ const row = Math.floor((100-pos)/10); const col = (row%2===0)? (pos-1)%10 : 9 - (pos-1)%10; return {x: col*SQUARE + SQUARE/2, y: row*SQUARE + SQUARE/2}; }
+    function drawPath(s,e,isL){ const a=coordFor(s), b=coordFor(e); laddersCtx.strokeStyle = isL? '#16a34a' : '#ef4444'; laddersCtx.lineWidth = 4; laddersCtx.beginPath(); laddersCtx.moveTo(a.x,a.y); if(isL) laddersCtx.lineTo(b.x,b.y); else laddersCtx.quadraticCurveTo((a.x+b.x)/2, (a.y+b.y)/2 + 20, b.x, b.y); laddersCtx.stroke(); }
+    function drawTokens(){ [0,1].forEach(i=>{ const p = laddersState.positions[i]; if(!p||p<=0) return; const c = coordFor(p); laddersCtx.beginPath(); laddersCtx.arc(c.x,c.y,14,0,Math.PI*2); laddersCtx.fillStyle = i===0? '#fb923c' : '#60a5fa'; laddersCtx.fill(); laddersCtx.lineWidth = 2; laddersCtx.strokeStyle = '#fff'; laddersCtx.stroke(); }); }
+    function drawDice(){ const x=520,y=200,size=70; laddersCtx.fillStyle='#fff'; laddersCtx.fillRect(x,y,size,size); laddersCtx.strokeStyle='#111827'; laddersCtx.lineWidth=3; laddersCtx.strokeRect(x,y,size,size); const cx=x+size/2, cy=y+size/2, dot=7; const mapping = {1:[[0,0]],2:[[-14,-14],[14,14]],3:[[-14,-14],[0,0],[14,14]],4:[[-14,-14],[14,-14],[-14,14],[14,14]],5:[[-14,-14],[14,-14],[0,0],[-14,14],[14,14]],6:[[-14,-18],[14,-18],[-14,0],[14,0],[-14,18],[14,18]] };
+      const v = laddersState.dice; (mapping[v]||[]).forEach(([dx,dy])=>{ laddersCtx.beginPath(); laddersCtx.arc(cx+dx, cy+dy, dot/2, 0, Math.PI*2); laddersCtx.fillStyle='#111827'; laddersCtx.fill(); }); }
+
+    function animateDice(cb){ if(!laddersState || laddersState.anim) return; laddersState.anim=true; document.getElementById('laddersStatus').textContent='Rolling...'; document.getElementById('laddersDiceArea').textContent='🎲 Shaking...'; let count=0; const id = setInterval(()=>{ laddersState.dice = Math.floor(Math.random()*6)+1; drawBoard(); count++; if(count>=12){ clearInterval(id); laddersState.dice = Math.floor(Math.random()*6)+1; drawBoard(); document.getElementById('laddersStatus').textContent='Rolled a '+laddersState.dice; document.getElementById('laddersDiceArea').textContent='🎲 '+laddersState.dice; setTimeout(()=>{ laddersState.anim=false; cb(laddersState.dice); },300); } },80); }
+
+    function animateMove(playerIdx, roll, cb){ laddersState.anim=true; const start = laddersState.positions[playerIdx]; let target = start + roll; if(target>100) target = start; const steps = Math.max(8, roll*6); let step=0; const id = setInterval(()=>{ step++; const prog = step/steps; laddersState.positions[playerIdx] = Math.round(start + (target-start)*prog); drawBoard(); if(step>=steps){ clearInterval(id); let final = laddersState.positions[playerIdx]; if(LADDER_MAP[final]){ final = LADDER_MAP[final]; laddersState.positions[playerIdx]=final; document.getElementById('laddersStatus').textContent='Ladder! Up to '+final; } else if(SNAKE_MAP[final]){ final = SNAKE_MAP[final]; laddersState.positions[playerIdx]=final; document.getElementById('laddersStatus').textContent='Snake! Down to '+final; } else document.getElementById('laddersStatus').textContent='Moved to '+final; drawBoard(); updateScore(); laddersState.anim=false; if(laddersState.positions[playerIdx]>=100){ document.getElementById('laddersStatus').textContent='Player '+(playerIdx+1)+' Wins! 🎉'; document.getElementById('laddersRollBtn').disabled=true; if(cb) setTimeout(cb,600); return; } if(cb) setTimeout(cb,200); } },60); }
+
+    function laddersRoll(){ if(!laddersState || laddersState.anim) return; const mode = laddersState.mode; animateDice((v)=>{
+      if(mode==='hotseat'){ const idx = laddersState.current-1; animateMove(idx, v, ()=>{ laddersState.current = laddersState.current===1?2:1; document.getElementById('laddersStatus').textContent = "Player "+laddersState.current+"'s Turn"; }); }
+      else if(mode==='ai'){ const idx = laddersState.current-1; animateMove(idx, v, ()=>{ if(laddersState.current===1){ laddersState.current = 2; document.getElementById('laddersStatus').textContent='PC thinking...'; setTimeout(()=>{ const ar = Math.floor(Math.random()*6)+1; animateMove(1, ar, ()=>{ laddersState.current=1; document.getElementById('laddersStatus').textContent='Your Turn'; }); },700); } else { laddersState.current=1; document.getElementById('laddersStatus').textContent="Player 1's Turn"; } }); }
+      else { // single - treat as player1 only
+        animateMove(0, v);
+      }
+    }); }
+
+    document.getElementById('laddersRollBtn').addEventListener('click', ()=> laddersRoll());
+    document.getElementById('laddersResetBtn').addEventListener('click', ()=>{ if(activeGame==='ladders') initLadders(activeMode); });
+
+    function updateScore(){ document.getElementById('laddersScore').textContent = `P1: ${laddersState.positions[0]} | P2: ${laddersState.positions[1]}`; }
+
+    /* ========== initial setup ========== */
+    (function initial(){ document.getElementById('gameArea').style.display='none'; drawBoard(); })();
+
+    // Expose functions to global for buttons
+    window.openGame = openGame; window.closeGame = closeGame; window.initSnake = initSnake; window.destroySnake = destroySnake; window.initLadders = initLadders; window.destroyLadders = destroyLadders;
+  </script>
+</body>
+</html>

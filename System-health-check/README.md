@@ -66,8 +66,6 @@ Run this script via cron to get daily health reports — just like a “Good mor
 So your Linux system can email you like a responsible adult.
 
 🧾 Installation
-bash
-Copy code
 sudo apt update
 sudo apt install postfix mailutils libsasl2-modules
 When prompted:
@@ -75,7 +73,6 @@ Select “Internet Site”
 Set the system mail name (example: myserver.local)
 
 🔧 Configure Postfix
-Copy code
 sudo nano /etc/postfix/main.cf
 #"Add below lines at the end:"
 relayhost = [smtp.gmail.com]:587
@@ -97,28 +94,21 @@ Choose App: Mail
 Choose Device: Other (e.g., “Postfix”)
 Click Generate → Copy the 16-character password
 Store credentials securely:
-
-bash
-Copy code
 sudo nano /etc/postfix/sasl_passwd
 
 Add:
 [smtp.gmail.com]:587 yourgmail@gmail.com:your_app_password
+
 Lock it down and activate:
 
-bash
-Copy code
 sudo chmod 600 /etc/postfix/sasl_passwd
 sudo postmap /etc/postfix/sasl_passwd
 sudo systemctl restart postfix
+
 📬 Test Email
-bash
-Copy code
 echo "This is a test email from Linux via Gmail SMTP." | mail -s "Postfix Gmail Test" your_email@gmail.com
 Or send your system report:
 
-bash
-Copy code
 mail -s "CPU Usage Report" your_email@gmail.com < /mnt/c/Users/Admin/dockerfolder/system_health_report.txt
 
 🧰 Troubleshooting (a.k.a. “Mail Drama”)
@@ -144,7 +134,6 @@ sudo tail -f /var/log/mail.log
 mailq
 
 5️⃣ Nuke stuck messages
-Copy code
 sudo postsuper -d ALL
 
 ✅ Quick Checklist
@@ -158,7 +147,6 @@ Test mail sent	✅
 
 🎯 Command Recap
 
-Copy code
 sudo apt install postfix mailutils libsasl2-modules
 sudo nano /etc/postfix/main.cf
 sudo nano /etc/postfix/sasl_passwd

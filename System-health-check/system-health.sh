@@ -2,7 +2,7 @@
 echo "==============================="
 echo "    System Health Check        "
 echo "==============================="
-EMAIL="avula2302@gmail.com"
+EMAIL="yourmail@gmail.com"
 REPORT="/mnt/c/Users/Admin/dockerfolder/system_health_report.txt"
 DISK=$(df -h)
 {
